@@ -17,6 +17,7 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 // server status check route
+// TODO: change or add the API version in future
 app.get('/ping', (_req, res) => {
   res.send('Pong');
 });
