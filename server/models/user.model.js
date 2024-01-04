@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import bcrypt from "bcryptjs"
-import jwt from jsonwebtoken
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new Schema(
   {
@@ -54,35 +54,35 @@ const userSchema = new Schema(
   }
 );
 
-
 // Hashes password before saving to the database
 userSchema.pre('save', async function (next) {
-  if(!this.modified('password')){
-    return next()
+  if (!this.isModified('password')) {
+    return next();
   }
-  this.password = await bcrypt.hash(this.password, 10)
-})
+  this.password = await bcrypt.hash(this.password, 10);
+});
 
 userSchema.methods = {
   // method to compare plain password with hashed password and return true or false
-  comparePassword : async function (plainPassword){
-    return bcrypt.compare(plainPassword, this.password)
+  comparePassword: async function (plainPassword) {
+    return bcrypt.compare(plainPassword, this.password);
   },
 
   // generate jwt token
-  generateJWTToken: async function (){
-    return await jwt.sign (
+  generateJWTToken: async function () {
+    return await jwt.sign(
       {
-        id: this._id, 
+        id: this._id,
         role: this.role,
-        subscription: this.subscription
+        subscription: this.subscription,
       },
-      process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRY
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRY,
       }
-    )
-  }
-}
+    );
+  },
+};
 
 const User = model('User', userSchema);
 export default User;

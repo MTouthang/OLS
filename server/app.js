@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import userRoutes from './routes/user.routes.js';
 config();
 
 const app = express();
@@ -15,6 +16,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(cookieParser());
 app.use(morgan('dev'));
+
+app.use('/api/v1/user', userRoutes);
 
 // server status check route
 // TODO: change or add the API version in future

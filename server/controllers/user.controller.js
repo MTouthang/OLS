@@ -1,6 +1,6 @@
-import asyncHandler from '../middlewares/asyncHandler.middleware';
-import AppError from '../utils/appError';
-import User from '../models/user.model';
+import asyncHandler from '../middlewares/asyncHandler.middleware.js';
+import AppError from '../utils/appError.js';
+import User from '../models/user.model.js';
 
 const cookieOptions = {
   secure: process.env.NODE_ENV === 'production' ? true : false,
@@ -10,10 +10,10 @@ const cookieOptions = {
 
 export const registerUser = asyncHandler(async (req, res, next) => {
   // extract data
-  const { fullName, email, password } = req.body;
+  const { name, email, password } = req.body;
 
   // check if the data is there or not, if not throw error message
-  if (!fullName || !email || !password) {
+  if (!name || !email || !password) {
     return next(new AppError('All fields are required', 400));
   }
 
@@ -25,7 +25,7 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 
   // create new user data object
   const user = await User.create({
-    fullName,
+    name,
     email,
     password,
     avatar: {
