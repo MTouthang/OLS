@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes.js';
+import errorMiddleware from './middlewares/error.middleware.js';
 config();
 
 const app = express();
@@ -24,6 +25,9 @@ app.use('/api/v1/user', userRoutes);
 app.get('/ping', (_req, res) => {
   res.send('Pong');
 });
+
+// custom Error middleware
+app.use(errorMiddleware);
 
 // default catch all route - 404
 app.all('*', (_req, res) => {

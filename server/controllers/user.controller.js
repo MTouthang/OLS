@@ -8,6 +8,9 @@ const cookieOptions = {
   httpOnly: true,
 };
 
+/**
+ * register user
+ */
 export const registerUser = asyncHandler(async (req, res, next) => {
   // extract data
   const { name, email, password } = req.body;
@@ -53,6 +56,43 @@ export const registerUser = asyncHandler(async (req, res, next) => {
   res.status(201).json({
     success: true,
     message: 'User registered successfully',
+    user,
+  });
+});
+
+/**
+ * User login
+ */
+export const loginUser = asyncHandler(async (req, res, next) => {
+  // destructuring the necessary data from from req object
+  const { email, password } = req.body;
+
+  // check if the user data is available
+  if (!email || !password) {
+    return next(new AppError('Email and Password are required', 404));
+  }
+
+  // Finding the user data with the sent email
+  const user = await User.findOne({ email }).select('+password');
+  // if no user or sent password do not match then send generic response
+  if (!(user && (await user.comparePassword(password)))) {
+    return next(
+      new AppError('Email or Password do not match or user does not exist', 401)
+    );
+  }
+  // generate JWT token
+  const token = await user.generateJWTToken();
+
+  // setting the password to undefined so it does not get sent in the response
+  user.password = undefined;
+
+  // setting the token in the cookie with the name token along with the cookie option
+  res.cookie('token', token, cookieOptions);
+
+  // if all good send the response to the frontend
+  res.status(200).json({
+    success: true,
+    message: 'User logged in successfully',
     user,
   });
 });

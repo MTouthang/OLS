@@ -65,7 +65,7 @@ userSchema.pre('save', async function (next) {
 userSchema.methods = {
   // method to compare plain password with hashed password and return true or false
   comparePassword: async function (plainPassword) {
-    return bcrypt.compare(plainPassword, this.password);
+    return await bcrypt.compare(plainPassword, this.password);
   },
 
   // generate jwt token
