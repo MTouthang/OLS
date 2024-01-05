@@ -9,7 +9,10 @@ const cookieOptions = {
 };
 
 /**
- * register user
+ * @REGISTRATION
+ * @ROUTE @POST {{URL}}/api/v1/register
+ * @return created user data with user registered massage
+ * @ACCESS public
  */
 export const registerUser = asyncHandler(async (req, res, next) => {
   // extract data
@@ -61,7 +64,10 @@ export const registerUser = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * User login
+ * @userLogin
+ * @ROUTE @POST {{URL}}/api/v1/login
+ * @return access token and user logged in successfully message
+ * @ACCESS public
  */
 export const loginUser = asyncHandler(async (req, res, next) => {
   // destructuring the necessary data from from req object
