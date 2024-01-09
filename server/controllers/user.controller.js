@@ -102,3 +102,25 @@ export const loginUser = asyncHandler(async (req, res, next) => {
     user,
   });
 });
+
+/**
+ * @userLogout
+ * @ROUTE @POST {{URL}}/api/v1/logout
+ * @return message with user logout successfully
+ * @ACCESS private
+ */
+
+export const userLogout = asyncHandler(async (req, res, next) => {
+  // logout by clearing cookies
+
+  res.cookie('token', null, {
+    secure: process.env.NODE_ENV === 'production' ? true : false,
+    maxAge: 0,
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'User Logout successfully',
+  });
+});
