@@ -124,3 +124,20 @@ export const userLogout = asyncHandler(async (req, res, next) => {
     message: 'User Logout successfully',
   });
 });
+
+/**
+ * @getLoggedInUserDetails
+ * @ROUTE @GET {{URL}}/api/v1/me
+ * @return loggedIn user details 
+ * @ACCESS private
+ */
+export const getLoggedInUserDetails = asyncHandler (async(req, res, next) => {
+  // Finding the user using the id from modified req object 
+  const user = await User.findById(req.user.id)
+
+  res.status(200).json({
+    success: true, 
+    message: "User details", 
+    user
+  })
+})
