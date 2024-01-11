@@ -1,6 +1,7 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const userSchema = new Schema(
   {
@@ -81,6 +82,21 @@ userSchema.methods = {
         expiresIn: process.env.JWT_EXPIRY,
       }
     );
+  },
+
+  generatePasswordResetToken: async function () {
+    // creating a random token using node's built-in crypto module
+    const resetToken = await crypto.randomBytes(20).toString('hex');
+
+    // Again using crypto module to hash the generated resetToken
+    this.forgotPasswordToken = await crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // Adding forgot password expiry to 15 minutes
+    this.forgotPasswordExpiry = Date.now() + 15 * 60 * 1000;
+    return resetToken;
   },
 };
 

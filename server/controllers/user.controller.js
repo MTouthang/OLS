@@ -1,6 +1,8 @@
 import asyncHandler from '../middlewares/asyncHandler.middleware.js';
 import AppError from '../utils/appError.js';
 import User from '../models/user.model.js';
+import sendEmail from '../utils/sendEmail.js';
+import crypto from 'crypto';
 
 const cookieOptions = {
   secure: process.env.NODE_ENV === 'production' ? true : false,
@@ -127,17 +129,150 @@ export const userLogout = asyncHandler(async (req, res, next) => {
 
 /**
  * @getLoggedInUserDetails
- * @ROUTE @GET {{URL}}/api/v1/me
- * @return loggedIn user details 
+ * @ROUTE @GET {{URL}}/api/v1/user/me
+ * @return loggedIn user details
  * @ACCESS private
  */
-export const getLoggedInUserDetails = asyncHandler (async(req, res, next) => {
-  // Finding the user using the id from modified req object 
-  const user = await User.findById(req.user.id)
+export const getLoggedInUserDetails = asyncHandler(async (req, res, next) => {
+  // Finding the user using the id from modified req object
+  const user = await User.findById(req.user.id);
 
   res.status(200).json({
-    success: true, 
-    message: "User details", 
-    user
-  })
-})
+    success: true,
+    message: 'User details',
+    user,
+  });
+});
+
+/**
+ *
+ * @forgotPassword
+ * @ROUTE @Post {{URL}}/api/v1/user/reset
+ * @return sent mail to the user email and reset a password
+ * @ACCESS public
+ *
+ */
+export const forgotPassword = asyncHandler(async (req, res, next) => {
+  // extract  email from the request body
+  const { email } = req.body;
+
+  // if no email send email is required
+  if (!email) {
+    return next(new AppError('Email is required', 400));
+  }
+
+  // finding the user via email
+  const user = await User.findOne({ email });
+
+  // if no user email found send the message email not found
+  if (!user) {
+    return next(new AppError('Email not registered', 400));
+  }
+
+  // generating reset token
+  const resetToken = await user.generatePasswordResetToken();
+
+  // saving the forgotPasswordToken to DB
+  await user.save();
+
+  // constructing a url to send the correct data
+  /**HERE
+   * req.protocol will send if http or https
+   * req.get('host') will get the hostname
+   * the rest is the route that we will create to verify if token is correct or not
+   */
+  const resetPasswordUrl = `${req.protocol}://${req.get(
+    'host'
+  )}/api/v1/user/reset/${resetToken}`;
+
+  // TODO: only the token can be sent to the user mail
+
+  // sent the resetPasswordUrl to the user email
+  const subject = 'Reset Password';
+  const message = `You can reset your password by clicking <a href=${resetPasswordUrl} target="_blank"> Reset your password</a>\n if the above link does not work for some reason then copy paste this link in new tab ${resetPasswordUrl}.\n if you have not request this, kindly ignore.`;
+
+  try {
+    await sendEmail(email, subject, message);
+
+    // if email sent successfully send the success response
+    res.status(200).json({
+      success: true,
+      message: `Reset password token has been sent to ${email} successfully`,
+    });
+  } catch (error) {
+    user.forgotPasswordToken = undefined;
+    user.forgotPasswordExpiry = undefined;
+
+    await user.save();
+
+    return next(
+      new AppError(error.message || 'Something went wrong, please try again'),
+      500
+    );
+  }
+});
+
+/**
+ *
+ * @resetPassword
+ * @ROUTE @POST {{URL}}/api/v1/user/reset/resetToken
+ * @return sent mail to the user email and reset a password
+ * @ACCESS private
+ *
+ */
+export const resetPassword = asyncHandler(async (req, res, next) => {
+  // extracting resetToken from req.params object
+  const { resetToken } = req.params;
+
+  // extracting password from req.body object
+  // TODO:confirm-password should be added
+  const { password } = req.body;
+
+  // we are again hashing the resetToken  using sha256 since we have stored our
+  // resetToken in DB using the same algorithm
+
+  // TODO: why do we hash the  resetToken again
+  const forgotPasswordToken = crypto
+    .createHash('Sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  console.log('forgotPasswordToken', forgotPasswordToken);
+
+  // check if password is not there then send response saying password is required.
+  if (!password) {
+    return next(new AppError('Password is required', 400));
+  }
+
+  // checking if token matches in DB and if it is still valid (not expired)
+  const user = await User.findOne({
+    forgotPasswordToken,
+    forgotPasswordExpiry: {
+      $gt: Date.now(), // @gt will help us check for greater than value, with this we can
+      // check if token is valid or expired
+    },
+  });
+
+  //if not found or expired send the response
+  if (!user) {
+    return next(
+      new AppError('Token is invalid or expired, please try again', 400)
+    );
+  }
+
+  // update the password if token is valid and not expired
+  user.password = password;
+
+  //making forgotPasswordToken and forgotPasswordExpiry to undefined
+  user.forgotPasswordExpiry = undefined;
+  user.forgotPasswordToken = undefined;
+
+  // saving the updated user value
+  await user.save();
+
+  // Sending the response when everything goes good
+  res.status(200).json({
+    success: true,
+    message: 'Password changed successfully',
+  });
+});
