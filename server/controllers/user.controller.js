@@ -3,6 +3,8 @@ import AppError from '../utils/appError.js';
 import User from '../models/user.model.js';
 import sendEmail from '../utils/sendEmail.js';
 import crypto from 'crypto';
+import cloudinary from 'cloudinary';
+import fs from 'fs/promises';
 
 const cookieOptions = {
   secure: process.env.NODE_ENV === 'production' ? true : false,
@@ -46,6 +48,36 @@ export const registerUser = asyncHandler(async (req, res, next) => {
     return next(
       new AppError('User registration failed, please try again later', 400)
     );
+  }
+
+  // run only if user sends a file
+  if (req.file) {
+    try {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: 'ols',
+        width: 250,
+        height: 250,
+        gravity: 'faces',
+        crop: 'fill',
+      });
+
+      // If success
+      if (result) {
+        // Set the public_id and secure_url in DB
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+
+        // After successful upload remove the file from local storage
+        fs.rm(`uploads/${req.file.filename}`);
+      }
+
+      // Save the user object
+      await user.save();
+    } catch (error) {
+      return next(
+        new AppError(error || 'File not uploaded, please try again', 400)
+      );
+    }
   }
 
   // Generating a JWT token

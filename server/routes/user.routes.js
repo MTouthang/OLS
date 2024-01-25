@@ -8,10 +8,11 @@ import {
   userLogout,
 } from '../controllers/user.controller.js';
 import { isLoggedIn } from '../middlewares/auth.middleware.js';
+import upload from '../middlewares/mutler.middleware.js';
 
 const router = Router();
 
-router.post('/register', registerUser);
+router.post('/register', upload.single('avatar'), registerUser);
 router.post('/login', loginUser);
 router.post('/logout', userLogout);
 
