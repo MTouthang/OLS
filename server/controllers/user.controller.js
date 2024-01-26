@@ -308,3 +308,119 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
     message: 'Password changed successfully',
   });
 });
+
+/**
+ * TODO: test change password route, work on update password controller logic and route
+ * @ChangePassword
+ * @ROUTE @POST {{URL}}/api/v1/change-password
+ * @return message with password updated or changed
+ * @ACCESS private
+ *
+ */
+export const changePassword = asyncHandler(async (req, res, next) => {
+  // destructure password
+  const { oldPassword, newPassword } = req.body;
+  const { id } = req.user; // because of the middleware isLoggedIn
+
+  // check if the field are there or not
+  if (!oldPassword || !newPassword) {
+    return next(
+      new AppError('oldPassword and newPassword should be included', 400)
+    );
+  }
+
+  // find the user by ID and selecting the password
+  const user = await User.findById(id).select('+password');
+
+  // check user is present
+  if (!user) {
+    return next(new AppError('User not available with the provided ID', 400));
+  }
+
+  // check if the old password is correct
+  const isValidPassword = await User.comparePassword(oldPassword);
+
+  // throw if error if the old password is not valid
+  if (!isValidPassword) {
+    return next(new AppError('Invalid Old password provided', 400));
+  }
+
+  // setting the new password
+  user.password = newPassword;
+
+  // save it to the database
+  await user.save();
+
+  // setting the password undefined so that it wont get sent in the response
+  user.password = undefined;
+
+  // sent success message
+  res.status(200).json({
+    success: true,
+    message: 'User password updated successfully',
+  });
+});
+
+/**
+ *
+ * @updateUserDetails
+ * @ROUTE @PUT {{URL}}/api/v1/user/update/userId
+ * @return message with password updated or changed
+ * @ACCESS private
+ *
+ */
+export const updateUserDetails = asyncHandler(async (req, res, next) => {
+  // destructure name (body) and id (middleware)
+  const { name } = req.body;
+
+  // TODO: get userId from auth middleware or params
+  const { userId } = req.params;
+
+  // get user wit id and check if its available
+  const user = await User.findById(userId);
+  if (!user) {
+    return next(new AppError('Invalid User id or user does not exist', 400));
+  }
+  // name update
+  if (name) {
+    user.name = name;
+  }
+
+  // check if user send file and update avatar
+  if (req.file) {
+    cloudinary.v2.uploader.destroy(user.avatar.public_id); // delete previous image
+
+    // upload
+    try {
+      cloudinary.v2.uploader.upload(req.file.path, {
+        folder: 'ols', // Save files in a folder named lms
+        width: 250,
+        height: 250,
+        gravity: 'faces',
+        crop: 'fill',
+      });
+
+      // if success
+      if (result) {
+        user.avatar.public_id = result.public_id;
+        user.avatar.secure_url = result.secure_url;
+      }
+
+      // after success upload remove the temp local file
+      fs.rm(`uploads/${req.file.name}`);
+    } catch (error) {
+      return next(
+        new AppError(`File upload failed! while updating: ${error}`, 400)
+      );
+    }
+  }
+
+  // save user data
+  await user.save();
+
+  // send success massage
+  res.status(200).json({
+    success: true,
+    message: 'User details updated successfully',
+  });
+});

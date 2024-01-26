@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import {
+  changePassword,
   forgotPassword,
   getLoggedInUserDetails,
   loginUser,
   registerUser,
   resetPassword,
+  updateUserDetails,
   userLogout,
 } from '../controllers/user.controller.js';
 import { isLoggedIn } from '../middlewares/auth.middleware.js';
@@ -19,5 +21,12 @@ router.post('/logout', userLogout);
 router.get('/me', isLoggedIn, getLoggedInUserDetails);
 router.post('/reset', forgotPassword);
 router.post('/reset/:resetToken', resetPassword);
+router.post('/change-password', isLoggedIn, changePassword);
+router.put(
+  '/update/:userId',
+  isLoggedIn,
+  upload.single('avatar'),
+  updateUserDetails
+);
 
 export default router;
