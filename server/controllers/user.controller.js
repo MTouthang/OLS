@@ -310,9 +310,10 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
 });
 
 /**
- * TODO: test change password route, work on update password controller logic and route
+ *
+ * TODO: send mail after password is changes successfully
  * @ChangePassword
- * @ROUTE @POST {{URL}}/api/v1/change-password
+ * @ROUTE @POST {{URL}}/api/v1/user/change-password
  * @return message with password updated or changed
  * @ACCESS private
  *
@@ -338,7 +339,7 @@ export const changePassword = asyncHandler(async (req, res, next) => {
   }
 
   // check if the old password is correct
-  const isValidPassword = await User.comparePassword(oldPassword);
+  const isValidPassword = await user.comparePassword(oldPassword);
 
   // throw if error if the old password is not valid
   if (!isValidPassword) {
@@ -388,11 +389,11 @@ export const updateUserDetails = asyncHandler(async (req, res, next) => {
 
   // check if user send file and update avatar
   if (req.file) {
-    cloudinary.v2.uploader.destroy(user.avatar.public_id); // delete previous image
+    await cloudinary.v2.uploader.destroy(user.avatar.public_id); // delete previous image
 
     // upload
     try {
-      cloudinary.v2.uploader.upload(req.file.path, {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
         folder: 'ols', // Save files in a folder named lms
         width: 250,
         height: 250,
@@ -407,7 +408,7 @@ export const updateUserDetails = asyncHandler(async (req, res, next) => {
       }
 
       // after success upload remove the temp local file
-      fs.rm(`uploads/${req.file.name}`);
+      fs.rm(`uploads/${req.file.filename}`);
     } catch (error) {
       return next(
         new AppError(`File upload failed! while updating: ${error}`, 400)

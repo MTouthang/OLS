@@ -21,7 +21,7 @@ router.post('/logout', userLogout);
 router.get('/me', isLoggedIn, getLoggedInUserDetails);
 router.post('/reset', forgotPassword);
 router.post('/reset/:resetToken', resetPassword);
-router.post('/change-password', isLoggedIn, changePassword);
+router.put('/change-password', isLoggedIn, changePassword);
 router.put(
   '/update/:userId',
   isLoggedIn,
