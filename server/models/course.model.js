@@ -13,6 +13,7 @@ const courseSchema = new Schema(
       required: [true, 'Description is required'],
       minlength: [20, 'Description must be atleast 20 characters long'],
     },
+    // TODO: pre-defined or created category
     category: {
       type: String,
       required: [true, 'Category is required'],

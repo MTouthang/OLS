@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import userRoutes from './routes/user.routes.js';
+import courseRoutes from './routes/course.routes.js';
 import errorMiddleware from './middlewares/error.middleware.js';
 config();
 
@@ -19,6 +20,7 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/course', courseRoutes);
 
 // server status check route
 // TODO: change or add the API version in future

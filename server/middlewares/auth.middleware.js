@@ -1,4 +1,3 @@
-import jwt, { decode } from 'jsonwebtoken';
 import AppError from '../utils/appError.js';
 import asyncHandler from './asyncHandler.middleware.js';
 
@@ -22,3 +21,14 @@ export const isLoggedIn = asyncHandler(async (req, res, next) => {
   // Do not forget to call the next otherwise the flow of execution will not be passed further.
   next();
 });
+
+// middleware to check if user is admin or not
+export const authorizeRoles = (...roles) =>
+  asyncHandler(async (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to view this route', 403)
+      );
+    }
+    next();
+  });
