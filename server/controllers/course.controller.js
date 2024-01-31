@@ -6,7 +6,7 @@ import AppError from '../utils/appError.js';
  *
  * @createCourse
  * @ROUTE @POST {{URL}}/api/v1/course
- * @return message with password updated or changed
+ * @return course object-
  * @ACCESS private
  *
  */
